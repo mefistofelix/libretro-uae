@@ -3,6 +3,9 @@
  *
  * usage: jit-runner <core.so> <frames> <content|-> [key=value ...]
  *   key=value: core options (puae_*) passed to the core; also sysdir=, savedir=, quiet=1.
+ *   input=FRAME:BUTTON[:LEN],...  press a RetroPad button of port 0 at FRAME for LEN frames
+ *     (default 6); BUTTON is b y select start up down left right a x l r l2 r2 l3 r3 or a number.
+ *   shots=FRAME,...  also write the frame to shot_FRAME.ppm at those frames.
  * Prints one status line every 50 frames, then a summary:
  *   resets, exceptions (illegal/A-line/F-line traps logged by the core), frame and chip RAM hashes.
  * Writes the last frame to last.ppm.
@@ -27,6 +30,31 @@ static uint8_t *frame;
 static unsigned frame_w, frame_h;
 static size_t frame_pitch;
 static int quiet_log;
+static int cur_frame;
+#define MAX_PRESS 128
+static struct { int frame, len, id; } press[MAX_PRESS];
+static int n_press;
+#define MAX_SHOTS 64
+static int shot[MAX_SHOTS], n_shots;
+static const char *btn_names[] = { "b", "y", "select", "start", "up", "down", "left", "right",
+	"a", "x", "l", "r", "l2", "r2", "l3", "r3" };
+
+static void parse_input(char *s)
+{
+	for (char *tok = strtok(s, ","); tok && n_press < MAX_PRESS; tok = strtok(NULL, ",")) {
+		char name[32] = "";
+		int fr = 0, len = 6;
+		if (sscanf(tok, "%d:%31[^:]:%d", &fr, name, &len) < 2)
+			continue;
+		int id = -1;
+		for (int i = 0; i < 16; i++)
+			if (!strcmp(name, btn_names[i]))
+				id = i;
+		if (id < 0)
+			id = atoi(name);
+		press[n_press].frame = fr; press[n_press].len = len; press[n_press++].id = id;
+	}
+}
 
 static uint32_t fnv(const uint8_t *p, size_t n, uint32_t h)
 {
@@ -110,7 +138,18 @@ static void video_cb(const void *data, unsigned w, unsigned h, size_t pitch)
 static void audio_cb(int16_t l, int16_t r) { (void)l; (void)r; }
 static size_t audio_batch_cb(const int16_t *d, size_t n) { (void)d; return n; }
 static void input_poll_cb(void) {}
-static int16_t input_state_cb(unsigned p, unsigned d, unsigned i, unsigned id) { return 0; }
+static int16_t input_state_cb(unsigned p, unsigned d, unsigned i, unsigned id)
+{
+	if (p != 0 || d != RETRO_DEVICE_JOYPAD)
+		return 0;
+	int16_t mask = 0;
+	for (int k = 0; k < n_press; k++)
+		if (cur_frame >= press[k].frame && cur_frame < press[k].frame + press[k].len)
+			mask |= 1 << press[k].id;
+	if (id == RETRO_DEVICE_ID_JOYPAD_MASK)
+		return mask;
+	return id < 16 ? (mask >> id) & 1 : 0;
+}
 
 static uint32_t frame_hash(void)
 {
@@ -166,6 +205,12 @@ int main(int argc, char **argv)
 		if (!strcmp(argv[i], "quiet")) { quiet_log = atoi(eq + 1); continue; }
 		if (!strcmp(argv[i], "sysdir")) { snprintf(sys_dir, sizeof(sys_dir), "%s", eq + 1); continue; }
 		if (!strcmp(argv[i], "savedir")) { snprintf(save_dir, sizeof(save_dir), "%s", eq + 1); continue; }
+		if (!strcmp(argv[i], "input")) { parse_input(eq + 1); continue; }
+		if (!strcmp(argv[i], "shots")) {
+			for (char *tok = strtok(eq + 1, ","); tok && n_shots < MAX_SHOTS; tok = strtok(NULL, ","))
+				shot[n_shots++] = atoi(tok);
+			continue;
+		}
 		opt_key[n_opts] = argv[i];
 		opt_val[n_opts++] = eq + 1;
 	}
@@ -207,7 +252,14 @@ int main(int argc, char **argv)
 		return 3;
 	}
 	for (int f = 1; f <= frames; f++) {
+		cur_frame = f;
 		p_retro_run();
+		for (int k = 0; k < n_shots; k++)
+			if (shot[k] == f) {
+				char path[64];
+				snprintf(path, sizeof(path), "shot_%d.ppm", f);
+				write_ppm(path);
+			}
 		if (f % 50 == 0) {
 			printf("frame %d resets %u traps %u screen %08x\n", f, resets, traps, frame_hash());
 			fflush(stdout);

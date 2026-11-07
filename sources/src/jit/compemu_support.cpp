@@ -62,6 +62,21 @@
 #include "sysdeps.h"
 
 #ifdef JIT
+/* The rest of PUAE is C: give its declarations (and the JIT entry points they declare,
+ * defined below) C linkage. System C++ headers first, so they are not included inside. */
+#ifdef __cplusplus
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdarg>
+#include <cmath>
+#include <cerrno>
+#include <cassert>
+#include <climits>
+#include <ctime>
+#include <string>
+extern "C" {
+#endif
 
 #ifdef UAE
 #define bug write_log
@@ -141,6 +156,10 @@ static inline void *vm_acquire(size_t size, int options)
 
 // %%% BRIAN KING WAS HERE %%%
 extern bool canbang;
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #include "compemu_prefs.c"
 

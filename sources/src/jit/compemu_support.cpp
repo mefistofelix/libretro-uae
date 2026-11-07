@@ -3644,6 +3644,8 @@ void calc_disp_ea_020(int base, uae_u32 dp, int target, int tmp)
 
 void set_cache_state(int enabled)
 {
+	if (getenv("PUAE_JIT_LOG") && enabled != cache_enabled)
+		write_log(_T("JIT: cache state %d -> %d\n"), cache_enabled, enabled);
 	if (enabled!=cache_enabled)
 		flush_icache_hard(3);
 	cache_enabled=enabled;
@@ -4567,6 +4569,8 @@ static void flush_icache_none(int v)
 void flush_icache_hard(int v)
 {
 	blockinfo* bi, *dbi;
+	if (getenv("PUAE_JIT_LOG"))
+		write_log(_T("JIT: flush hard (%d) cacr %08x\n"), v, regs.cacr);
 
 #ifndef UAE
 	jit_log("JIT: Flush Icache_hard(%d/%x/%p), %u KB",
@@ -4612,6 +4616,9 @@ static inline void flush_icache_lazy(int v)
 {
 	blockinfo* bi;
 	blockinfo* bi2;
+
+	if (getenv("PUAE_JIT_LOG"))
+		write_log(_T("JIT: flush lazy (%d) cacr %08x active %p\n"), v, regs.cacr, active);
 
 	if (!active)
 		return;

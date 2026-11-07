@@ -65,6 +65,14 @@ jobs:
           name: puae_libretro_android-${{ matrix.abi }}
           path: out/*
 
+      - uses: actions/upload-artifact@v4
+        if: matrix.abi == 'armeabi-v7a'
+        with:
+          name: jit-generated-tables
+          path: |
+            sources/src/jit/compemu.c
+            sources/src/jit/compstbl.c
+
   # Every successful build is published as a GitHub release:
   #  - tags v*: a normal release with that tag;
   #  - branches: a rolling pre-release "build-<branch>", replaced by each new successful build.

@@ -6881,6 +6881,10 @@ void m68k_go (int may_quit)
 		if (libretro_frame_end)
 		{
 			libretro_frame_end = false;
+			/* libretro-glue sets spcflags bit 0 at frame end to get out of the CPU loop;
+			 * clear it, or every instruction keeps taking the special path afterwards
+			 * (and the JIT can only build one-instruction blocks) */
+			unset_special(1);
 			return 0;
 		}
 #endif

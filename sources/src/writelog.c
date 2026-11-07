@@ -15,7 +15,6 @@
 
 #include "uae/string.h"
 #include "uae/types.h"
-#include "uae.h"
 
 #ifdef __LIBRETRO__
 #include "libretro.h"
@@ -89,7 +88,7 @@ void jit_abort (const char *fmt, ...)
 	fprintf (stderr, fmt, x1, x2, x3, x4, x5, x6, x7, x8);
     }
 #endif
-	uae_reset(1, 0);
+	{ extern void uae_reset (int, int); uae_reset(1, 0); }
 }
 #endif
 

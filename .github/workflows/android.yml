@@ -43,7 +43,7 @@ jobs:
       - name: Build with ndk-build
         working-directory: jni
         run: |
-          "$ANDROID_NDK_LATEST_HOME/ndk-build" -j"$(nproc)" \
+          "$ANDROID_NDK_LATEST_HOME/ndk-build" -k -j"$(nproc)" \
             APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-21 NDK_CCACHE=ccache
 
       - name: Package
@@ -59,12 +59,17 @@ jobs:
           name: puae_libretro_android-${{ matrix.abi }}
           path: out/*
 
+  # Every successful build is published as a GitHub release:
+  #  - tags v*: a normal release with that tag;
+  #  - branches: a rolling pre-release "build-<branch>", replaced by each new successful build.
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -75,6 +80,15 @@ jobs:
             abi=$(basename "$d" | sed 's/puae_libretro_android-//')
             mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
           done
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.zip
+          ls -la dist
+      - name: Publish release
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = tag ]; then
+            gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$GITHUB_REF_NAME" --generate-notes
+          else
+            tag="build-$(echo "$GITHUB_REF_NAME" | tr '/' '-')"
+            gh release delete "$tag" --yes --cleanup-tag || true
+            gh release create "$tag" dist/*.zip --prerelease --target "$GITHUB_SHA" \
+              --title "$GITHUB_REF_NAME build $(echo "$GITHUB_SHA" | cut -c1-7)" \
+              --notes "Automatic build of $GITHUB_REF_NAME at $GITHUB_SHA."
+          fi

@@ -4099,8 +4099,12 @@ static void prepare_block(blockinfo* bi)
 }
 
 #ifdef UAE
+static unsigned jit_trace_count;  /* translated block runs, for PUAE_JIT_TRACE */
+
 void compemu_reset(void)
 {
+	if (getenv("PUAE_JIT_TRACE"))
+		write_log(_T("JIT: reset after %u block runs\n"), jit_trace_count);
 	flush_icache = lazy_flush ? flush_icache_lazy : flush_icache_hard;
 	set_cache_state(0);
 }
@@ -4811,6 +4815,7 @@ static void print_inst(void)
 static int jit_trace_left = -1, jit_trace_skip;
 static void jit_trace_block(uae_u32 pc)
 {
+	jit_trace_count++;
 	if (jit_trace_skip > 0) {
 		jit_trace_skip--;
 		return;
@@ -4839,6 +4844,11 @@ static void jit_trace_block(uae_u32 pc)
 	if (chipmem_bank.baseaddr)
 		for (int i = 0; i < 0x10000; i++)
 			h = (h ^ chipmem_bank.baseaddr[i]) * 16777619u;
+	/* and of the first 64 KB of Zorro II fast RAM (UAE boot/filesystem code is copied there) */
+	addrbank *fb = &get_mem_bank(0x200000);
+	if ((fb->flags & ABFLAG_RAM) && fb->baseaddr)
+		for (int i = 0; i < 0x10000; i++)
+			h = (h ^ fb->baseaddr[i]) * 16777619u;
 	write_log(_T("%s H %08x\n"), line, h);
 }
 #endif

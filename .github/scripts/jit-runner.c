@@ -225,8 +225,7 @@ static void crash_handler(int sig, siginfo_t *si, void *uc_)
 		n += snprintf(buf + n, sizeof(buf) - n, "  code at pc-16:");
 		for (int i = -4; i < 4; i++)
 			n += snprintf(buf + n, sizeof(buf) - n, " %08lx", (unsigned long)((uint32_t *)pc)[i]);
-		n += snprintf(buf + n, sizeof(buf) - n, "
-");
+		n += snprintf(buf + n, sizeof(buf) - n, "\n");
 	}
 	/* return addresses on the stack that point into the core: a rough backtrace */
 	unsigned long *sp = (unsigned long *)m->arm_sp;

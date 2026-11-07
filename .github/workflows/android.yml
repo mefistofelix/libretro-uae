@@ -56,8 +56,10 @@ jobs:
         run: |
           mkdir -p out
           cp libs/${{ matrix.abi }}/libretro.so out/puae_libretro_android.so
+          cp obj/local/${{ matrix.abi }}/libretro.so out/puae_libretro_android.debug.so   # symbols, for crash offsets
           cd out
           zip -9 puae_libretro_android.so.zip puae_libretro_android.so
+          zip -9 puae_libretro_android.debug.so.zip puae_libretro_android.debug.so && rm puae_libretro_android.debug.so
           sha256sum puae_libretro_android.so* > SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4
@@ -94,6 +96,7 @@ jobs:
             abi=$(basename "$d" | sed 's/puae_libretro_android-//')
             mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
             [ -f "$d/jit-runner" ] && mv "$d/jit-runner" "dist/jit-runner-$abi"
+            mv "$d/puae_libretro_android.debug.so.zip" "dist/puae_libretro_android-$abi.debug.so.zip"
           done
           ls -la dist
       - name: Publish release

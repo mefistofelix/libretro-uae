@@ -335,7 +335,19 @@ endif
 
 CXXFLAGS += -DUAE -MMD
 
+# 68020+ JIT with the 32-bit ARM backend, same setup as jni/Android.mk (used by the CI JIT tests
+# on a Linux armhf build). Needs the ARM opcode tables from .github/scripts/gen-arm-jit.sh.
+ifeq ($(ARM_JIT), 1)
+   PLATFLAGS += -DJIT -DCPU_arm -DARMV6_ASSEMBLY -DARM_ASSEMBLY -DUAE= -DHAVE_MMAN -DJIT_NO_NATMEM
+   LDFLAGS   += -lstdc++
+endif
+
 include Makefile.common
+
+ifeq ($(ARM_JIT), 1)
+   SOURCES_C   += $(EMU)/jit/compemu.c $(EMU)/jit/compstbl.c $(EMU)/vm.c
+   SOURCES_CXX += $(EMU)/jit/compemu_support.cpp
+endif
 
 OBJECTS     += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(SOURCES_ASM:.S=.o)
 

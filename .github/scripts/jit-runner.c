@@ -2,7 +2,7 @@
  * Headless libretro frontend for testing the PUAE JIT (e.g. under qemu-arm).
  *
  * usage: jit-runner <core.so> <frames> <content|-> [key=value ...]
- *   key=value: core options (puae_*) passed to the core.
+ *   key=value: core options (puae_*) passed to the core; also sysdir=, savedir=, quiet=1.
  * Prints one status line every 50 frames, then a summary:
  *   resets, exceptions (illegal/A-line/F-line traps logged by the core), frame and chip RAM hashes.
  * Writes the last frame to last.ppm.
@@ -150,6 +150,8 @@ static void write_ppm(const char *path)
 
 int main(int argc, char **argv)
 {
+	snprintf(sys_dir, sizeof(sys_dir), "system");
+	snprintf(save_dir, sizeof(save_dir), "saves");
 	if (argc < 4) {
 		fprintf(stderr, "usage: %s core.so frames content|- [key=value...]\n", argv[0]);
 		return 2;
@@ -162,11 +164,11 @@ int main(int argc, char **argv)
 			continue;
 		*eq = 0;
 		if (!strcmp(argv[i], "quiet")) { quiet_log = atoi(eq + 1); continue; }
+		if (!strcmp(argv[i], "sysdir")) { snprintf(sys_dir, sizeof(sys_dir), "%s", eq + 1); continue; }
+		if (!strcmp(argv[i], "savedir")) { snprintf(save_dir, sizeof(save_dir), "%s", eq + 1); continue; }
 		opt_key[n_opts] = argv[i];
 		opt_val[n_opts++] = eq + 1;
 	}
-	snprintf(sys_dir, sizeof(sys_dir), "system");
-	snprintf(save_dir, sizeof(save_dir), "saves");
 	mkdir(sys_dir, 0755);
 	mkdir(save_dir, 0755);
 

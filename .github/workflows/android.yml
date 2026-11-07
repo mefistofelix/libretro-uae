@@ -46,6 +46,12 @@ jobs:
           "$ANDROID_NDK_LATEST_HOME/ndk-build" -k -j"$(nproc)" \
             APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-21 NDK_CCACHE=ccache APP_CFLAGS="-w -ferror-limit=0"
 
+      - name: Build JIT test runner (headless libretro frontend, run with adb shell)
+        if: matrix.abi == 'armeabi-v7a'
+        run: |
+          mkdir -p out
+          "$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang"             -O2 -w -Ilibretro-common/include .github/scripts/jit-runner.c -ldl -o out/jit-runner
+
       - name: Package
         run: |
           mkdir -p out
@@ -79,16 +85,17 @@ jobs:
           for d in dist/*/; do
             abi=$(basename "$d" | sed 's/puae_libretro_android-//')
             mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
+            [ -f "$d/jit-runner" ] && mv "$d/jit-runner" "dist/jit-runner-$abi"
           done
           ls -la dist
       - name: Publish release
         run: |
           if [ "${GITHUB_REF_TYPE}" = tag ]; then
-            gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/jit-runner-* --title "$GITHUB_REF_NAME" --generate-notes
           else
             tag="build-$(echo "$GITHUB_REF_NAME" | tr '/' '-')"
             gh release delete "$tag" --yes --cleanup-tag || true
-            gh release create "$tag" dist/*.zip --prerelease --target "$GITHUB_SHA" \
+            gh release create "$tag" dist/*.zip dist/jit-runner-* --prerelease --target "$GITHUB_SHA" \
               --title "$GITHUB_REF_NAME build $(echo "$GITHUB_SHA" | cut -c1-7)" \
               --notes "Automatic build of $GITHUB_REF_NAME at $GITHUB_SHA."
           fi

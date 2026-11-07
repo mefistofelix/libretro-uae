@@ -1680,6 +1680,9 @@ MIDFUNC(2,xor_b,(RW1 d, RR1 s))
 MIDFUNC(5,call_r_02,(RR4 r, RR4 in1, RR4 in2, IMM isize1, IMM isize2))
 {
 	clobber_flags();
+	/* as in the x86 version: pending offsets (e.g. the +4 of (An)+, kept lazily on a
+	 * register shared with the address copy) must be applied before the arguments are set up */
+	remove_all_offsets();
 	in1=readreg_specific(in1,isize1,REG_PAR1);
 	in2=readreg_specific(in2,isize2,REG_PAR2);
 	r=readreg(r,4);
@@ -1696,6 +1699,9 @@ MIDFUNC(5,call_r_02,(RR4 r, RR4 in1, RR4 in2, IMM isize1, IMM isize2))
 MIDFUNC(5,call_r_11,(W4 out1, RR4 r, RR4 in1, IMM osize, IMM isize))
 {
 	clobber_flags();
+	/* as in the x86 version: pending offsets (e.g. the +4 of (An)+, kept lazily on a
+	 * register shared with the address copy) must be applied before the arguments are set up */
+	remove_all_offsets();
 
 	if (osize==4) {
 		if (out1!=in1 && out1!=r) {

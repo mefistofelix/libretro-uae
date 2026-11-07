@@ -49,6 +49,9 @@ using namespace std;
 /* This was originally regparm(3), but as far as I can see only two register
  * params are supported by the JIT code. It probably just worked anyway
  * if all functions used max two arguments. */
+#elif defined(CPU_arm)
+/* AAPCS already passes the first arguments in r0-r3, which is what the ARM JIT expects. */
+#define JITCALL
 #elif !defined(JIT)
 #define JITCALL
 #endif

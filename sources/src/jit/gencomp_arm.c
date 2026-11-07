@@ -4625,6 +4625,26 @@ gen_opcode(unsigned long int opcode) {
 		gen_move16(opcode, curi);
 		break;
 
+#ifdef UAE
+	/* MMU and special opcodes of PUAE's CPU table: same handling as jit/gencomp.c */
+	case i_MMUOP030:
+	case i_PFLUSHN:
+	case i_PFLUSH:
+	case i_PFLUSHAN:
+	case i_PFLUSHA:
+	case i_PLPAR:
+	case i_PLPAW:
+	case i_PTESTR:
+	case i_PTESTW:
+	case i_LPSTOP:
+	case i_PULSE:
+	case i_HALT:
+		isjump;
+		failure;
+		break;
+#endif
+
+#ifdef WINUAE_ARANYM
 	case i_EMULOP_RETURN:
 		isjump;
 		failure;
@@ -4643,6 +4663,7 @@ gen_opcode(unsigned long int opcode) {
 		isjump;
 		failure;
 		break;
+#endif
 	default:
 		assert(0);
 		break;

@@ -3268,6 +3268,9 @@ static uintptr get_handler(uintptr addr)
  * if that assumption is wrong! No branches, no second chances, just
  * straight go-for-it attitude */
 
+static inline void writemem(int address, int source, int offset, int size, int tmp);
+static inline void readmem(int address, int dest, int offset, int size, int tmp);
+
 static void writemem_real(int address, int source, int size, int tmp, int clobber)
 {
 #if defined(CPU_arm) && !defined(NATMEM_OFFSET)

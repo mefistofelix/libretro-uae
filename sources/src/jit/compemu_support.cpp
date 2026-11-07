@@ -3270,6 +3270,11 @@ static uintptr get_handler(uintptr addr)
 
 static void writemem_real(int address, int source, int size, int tmp, int clobber)
 {
+#if defined(CPU_arm) && !defined(NATMEM_OFFSET)
+	/* No natmem, and the ARM backend has no indexed host stores: use the bank handlers */
+	(void)clobber;
+	writemem_special(address, source, (size == 1 ? 5 : size == 2 ? 4 : 3) * SIZEOF_VOID_P, size, tmp);
+#else
 	int f=tmp;
 
 #ifdef NATMEM_OFFSET
@@ -3312,6 +3317,7 @@ static void writemem_real(int address, int source, int size, int tmp, int clobbe
 		mid_bswap_32(source); break;
 	}
 #endif
+#endif /* defined(CPU_arm) && !defined(NATMEM_OFFSET) */
 }
 
 #ifdef UAE
@@ -3390,6 +3396,9 @@ void writelong(int address, int source, int tmp)
 
 static void readmem_real(int address, int dest, int size, int tmp)
 {
+#if defined(CPU_arm) && !defined(NATMEM_OFFSET)
+	readmem_special(address, dest, (size == 1 ? 2 : size == 2 ? 1 : 0) * SIZEOF_VOID_P, size, tmp);
+#else
 	int f=tmp;
 
 	if (size==4 && address!=dest)
@@ -3421,6 +3430,7 @@ static void readmem_real(int address, int dest, int size, int tmp)
 	}
 	forget_about(tmp);
 #endif
+#endif /* defined(CPU_arm) && !defined(NATMEM_OFFSET) */
 }
 
 
@@ -4353,6 +4363,7 @@ void build_comp(void)
 			nfcompfunctbl[cft_map(nftbl[i].opcode)] = NULL;
 		else
 			nfcompfunctbl[cft_map(nftbl[i].opcode)] = nftbl[i].handler;
+#if !defined(CPU_arm)
 		for (j = 0; nfctbl[j].handler_ff; j++) {
 			if (nfctbl[j].opcode == nftbl[i].opcode) {
 #ifdef NOFLAGS_SUPPORT_GENCOMP
@@ -4374,6 +4385,7 @@ void build_comp(void)
 			jit_log("%04x (%s) unavailable", nftbl[i].opcode, s);
 			xfree(s);
 		}
+#endif
 	}
 
 #ifdef NOFLAGS_SUPPORT_GENCOMP

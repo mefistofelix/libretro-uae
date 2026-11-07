@@ -2405,6 +2405,33 @@ LOWFUNC(WRITE,READ,2,compemu_raw_cmp_l_mi8,(MEMR d, IMM s))
 #endif
 }
 
+#ifdef UAE
+/* UAE ends blocks with "countdown -= cycles; continue if countdown >= 0" (x86: sub mem,imm +
+ * jns). ARM: r2 = &countdown, r3 = [r2]; subtract in 8-bit chunks (each one is a valid ARM
+ * immediate), the last one with SUBS so N reflects the final value; STR keeps the flags. */
+LOWFUNC(WRITE,RMW,2,raw_sub_l_mi,(MEMRW d, IMM s))
+{
+	int shift, last = 0;
+	long offs = data_long_offs(d);
+	LDR_rRI(REG_WORK1, RPC_INDEX, offs);		// ldr     r2, [pc, #offs]    ; &countdown
+	LDR_rR(REG_WORK2, REG_WORK1);			// ldr     r3, [r2]
+	for (shift = 0; shift < 32; shift += 8)
+		if ((s >> shift) & 0xff)
+			last = shift;
+	for (shift = 0; shift <= last; shift += 8) {
+		uae_u32 chunk = s & (0xffu << shift);
+		if (shift == last)
+			SUBS_rri(REG_WORK2, REG_WORK2, chunk);	// subs    r3, r3, #chunk
+		else if (chunk)
+			SUB_rri(REG_WORK2, REG_WORK2, chunk);	// sub     r3, r3, #chunk
+	}
+	STR_rR(REG_WORK2, REG_WORK1);			// str     r3, [r2]
+}
+#define raw_jcc_l_oponly(cc) compemu_raw_jcc_l_oponly(cc)
+#define raw_cmov_l_rm_indexed(d, base, index, factor, cond) \
+	compemu_raw_cmov_l_rm_indexed(d, base, index, factor, cond)
+#endif
+
 LOWFUNC(NONE,NONE,3,compemu_raw_lea_l_brr,(W4 d, RR4 s, IMM offset))
 {
 #if defined(USE_DATA_BUFFER)

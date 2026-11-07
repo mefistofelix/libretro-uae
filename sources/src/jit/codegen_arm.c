@@ -523,13 +523,10 @@ LOWFUNC(READ,NONE,3,raw_cmov_l_rr,(RW4 d, RR4 s, IMM cc))
 
 LOWFUNC(WRITE,NONE,2,raw_cmp_b,(RR1 d, RR1 s))
 {
-#if defined(ARMV6_ASSEMBLY)
-	SXTB_rr(REG_WORK1, d);							// sxtb r2,%[d]
-	SXTB_rr(REG_WORK2, s);							// sxtb r3,%[s]
-#else
+	/* operands at the top of the register: the ARM flags are the 68k 8-bit flags
+	 * (sign-extending with SXTB, as the ARMv6 path did, gives 32-bit C and V) */
 	LSL_rri(REG_WORK1, d, 24);						// lsl  r2,r6,#24
 	LSL_rri(REG_WORK2, s, 24);						// lsl  r3,r7,#24
-#endif
 	CMP_rr(REG_WORK1, REG_WORK2);					// cmp r2, r3
 
 	MRS_CPSR(REG_WORK1);                        	// mrs     r2, CPSR
@@ -539,13 +536,10 @@ LOWFUNC(WRITE,NONE,2,raw_cmp_b,(RR1 d, RR1 s))
 
 LOWFUNC(WRITE,NONE,2,raw_cmp_w,(RR2 d, RR2 s))
 {
-#if defined(ARMV6_ASSEMBLY)
-	SXTH_rr(REG_WORK1, d);						// sxtb r2,%[d]
-	SXTH_rr(REG_WORK2, s);						// sxtb r3,%[s]
-#else
+	/* operands at the top of the register: the ARM flags are the 68k 16-bit flags
+	 * (sign-extending with SXTH, as the ARMv6 path did, gives 32-bit C and V) */
 	LSL_rri(REG_WORK1, d, 16); 					// lsl	r6, r1, #16
 	LSL_rri(REG_WORK2, s, 16); 					// lsl	r7, r2, #16
-#endif
 
 	CMP_rr(REG_WORK1, REG_WORK2); 				// cmp	r7, r6, asr #16
 

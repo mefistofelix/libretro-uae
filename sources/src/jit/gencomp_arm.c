@@ -698,7 +698,48 @@ static void gen_move16(uae_u32 opcode, struct instr *curi) {
 #endif
 }
 
+/* PUAE ARM JIT has no natmem: MOVEM must go through the memory bank handlers one register at
+ * a time. The native-pointer version below wrote custom chip registers (e.g. MOVEM.L Dn-Dm,
+ * $40(A6) with A6 = $DFF000 to set up the blitter) straight into host memory, so the chips
+ * never saw the writes (Banshee hung on "Get Ready"). */
+static void genmovem_handlers(uae_u16 opcode, int to_memory) {
+	int sz = table68k[opcode].size == sz_long ? 4 : 2;
+	comprintf("\tuae_u16 mask = %s;\n", gen_nextiword());
+	comprintf("\tint addr=scratchie++;\n");
+	comprintf("\tint i;\n");
+	genamode(table68k[opcode].dmode, "dstreg", table68k[opcode].size, "src", 2, 1);
+	comprintf("\tmov_l_rr(addr,srca);\n");
+	if (to_memory && table68k[opcode].dmode == Apdi) {
+		comprintf("\tfor (i=0;i<16;i++) {\n"
+				"\t\tif ((mask>>i)&1) {\n"
+				"\t\t\tlea_l_brr(addr,addr,-%d);\n"
+				"\t\t\t%s(addr,15-i,scratchie);\n"
+				"\t\t}\n"
+				"\t}\n", sz, sz == 4 ? "writelong" : "writeword");
+		comprintf("\tmov_l_rr(8+dstreg,addr);\n");
+		return;
+	}
+	comprintf("\tfor (i=0;i<16;i++) {\n"
+			"\t\tif ((mask>>i)&1) {\n");
+	if (to_memory)
+		comprintf("\t\t\t%s(addr,i,scratchie);\n", sz == 4 ? "writelong" : "writeword");
+	else if (sz == 4)
+		comprintf("\t\t\treadlong(addr,i,scratchie);\n");
+	else
+		comprintf("\t\t\treadword(addr,i,scratchie);\n"
+				"\t\t\tsign_extend_16_rr(i,i);\n");
+	comprintf("\t\t\tlea_l_brr(addr,addr,%d);\n"
+			"\t\t}\n"
+			"\t}\n", sz);
+	if (!to_memory && table68k[opcode].dmode == Aipi)
+		comprintf("\tmov_l_rr(8+dstreg,addr);\n");
+}
+
 static void genmovemel(uae_u16 opcode) {
+	if (1) {
+		genmovem_handlers(opcode, 0);
+		return;
+	}
 	comprintf("\tuae_u16 mask = %s;\n", gen_nextiword());
 	comprintf("\tint native=scratchie++;\n");
 	comprintf("\tint i;\n");
@@ -733,6 +774,10 @@ static void genmovemel(uae_u16 opcode) {
 }
 
 static void genmovemle(uae_u16 opcode) {
+	if (1) {
+		genmovem_handlers(opcode, 1);
+		return;
+	}
 	comprintf("\tuae_u16 mask = %s;\n", gen_nextiword());
 	comprintf("\tint native=scratchie++;\n");
 	comprintf("\tint i;\n");

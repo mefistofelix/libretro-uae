@@ -1123,8 +1123,7 @@ static void retro_set_core_options()
          "puae_cpu_jit",
          "System > JIT Compiler",
          "JIT Compiler",
-         "Translate 68020+ code to native code (translation cache size). Much faster for A1200/AGA games. Needs a 68020 or later model, and replaces 'CPU Compatibility' with 'Normal'.
-Core restart required.",
+         "Translate 68020+ code to native code (translation cache size). Much faster for A1200/AGA games. Needs a 68020 or later model, and replaces 'CPU Compatibility' with 'Normal'.\nCore restart required.",
          NULL,
          "system",
          {
@@ -3973,22 +3972,16 @@ static void update_variables(void)
       if (strcmp(var.value, "disabled"))
       {
          /* the JIT only translates in non cycle-exact mode */
-         strcat(uae_config, "cpu_compatible=false
-");
-         strcat(uae_config, "cpu_cycle_exact=false
-");
-         strcat(uae_config, "cpu_memory_cycle_exact=false
-");
-         strcat(uae_config, "blitter_cycle_exact=false
-");
+         strcat(uae_config, "cpu_compatible=false\n");
+         strcat(uae_config, "cpu_cycle_exact=false\n");
+         strcat(uae_config, "cpu_memory_cycle_exact=false\n");
+         strcat(uae_config, "blitter_cycle_exact=false\n");
          strcat(uae_config, "cachesize=");
          strcat(uae_config, var.value);
-         strcat(uae_config, "
-");
+         strcat(uae_config, "\n");
       }
       else
-         strcat(uae_config, "cachesize=0
-");
+         strcat(uae_config, "cachesize=0\n");
    }
 #endif
 

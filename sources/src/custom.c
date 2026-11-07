@@ -5841,12 +5841,14 @@ static void record_sprite(int num, int sprxp, uae_u16 *data, uae_u16 *datb, unsi
 	/* We have 8 bits per pixel in spixstate, two for every sprite pair.  The
 	low order bit records whether the attach bit was set for this pair.  */
 	if (attachment) {
-		uae_u32 state = 0x01010101 << (num & ~1);
-		uae_u32 *stb1 = (uae_u32*)(spixstate.stb + word_offs);
+		/* byte by byte: spixstate.stb + word_offs is not 4-byte aligned, and two 32-bit
+		 * stores become one STRD that raises SIGBUS on 32-bit ARM (Pinball Fantasies) */
+		uae_u8 state = (uae_u8)(1 << (num & ~1));
+		uae_u8 *stb1 = spixstate.stb + word_offs;
 		for (int i = 0; i < width; i += 8) {
-			stb1[0] |= state;
-			stb1[1] |= state;
-			stb1 += 2;
+			for (int j = 0; j < 8; j++)
+				stb1[j] |= state;
+			stb1 += 8;
 		}
 		e->has_attached = 1;
 	}

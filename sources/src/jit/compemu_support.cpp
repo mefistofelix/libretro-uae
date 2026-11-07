@@ -4834,7 +4834,12 @@ static void jit_trace_block(uae_u32 pc)
 		else
 			q += sprintf(q, " --------");
 	}
-	write_log(_T("%s\n"), line);
+	/* hash of the first 64 KB of chip RAM: shows the block that wrote wrong memory */
+	uae_u32 h = 2166136261u;
+	if (chipmem_bank.baseaddr)
+		for (int i = 0; i < 0x10000; i++)
+			h = (h ^ chipmem_bank.baseaddr[i]) * 16777619u;
+	write_log(_T("%s H %08x\n"), line, h);
 }
 #endif
 

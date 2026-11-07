@@ -15,6 +15,7 @@
 
 #include "uae/string.h"
 #include "uae/types.h"
+#include "uae.h"
 
 #ifdef __LIBRETRO__
 #include "libretro.h"

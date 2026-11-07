@@ -58,10 +58,6 @@
 /* kludge for Brian, so he can compile under MSVC++ */
 #define USE_NORMAL_CALLING_CONVENTION 0
 
-#include "sysconfig.h"
-#include "sysdeps.h"
-
-#ifdef JIT
 /* The rest of PUAE is C: give its declarations (and the JIT entry points they declare,
  * defined below) C linkage. System C++ headers first, so they are not included inside. */
 #ifdef __cplusplus
@@ -77,6 +73,10 @@
 #include <string>
 extern "C" {
 #endif
+#include "sysconfig.h"
+#include "sysdeps.h"
+
+#ifdef JIT
 
 #ifdef UAE
 #define bug write_log

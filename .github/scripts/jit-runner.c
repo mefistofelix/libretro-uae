@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include "libretro.h"
 
-#define MAX_OPTS 64
+#define MAX_OPTS 512
 static const char *opt_key[MAX_OPTS], *opt_val[MAX_OPTS];
 static int n_opts;
 static char sys_dir[1024], save_dir[1024];
@@ -112,6 +112,22 @@ static bool environment(unsigned cmd, void *data)
 		*(unsigned *)data = 0;  /* legacy SET_VARIABLES is enough */
 		return true;
 	case RETRO_ENVIRONMENT_SET_VARIABLES:
+		/* like a frontend: options not given on the command line take the core's default,
+		 * the first value of "Description; default|other|..." */
+		for (const struct retro_variable *v = data; v && v->key; v++) {
+			int known = 0;
+			for (int i = 0; i < n_opts; i++)
+				known |= !strcmp(v->key, opt_key[i]);
+			const char *semi = v->value ? strstr(v->value, "; ") : NULL;
+			if (known || !semi || n_opts >= MAX_OPTS)
+				continue;
+			char *def = strdup(semi + 2), *bar = strchr(def, '|');
+			if (bar)
+				*bar = 0;
+			opt_key[n_opts] = strdup(v->key);
+			opt_val[n_opts++] = def;
+		}
+		return true;
 	case RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME:
 	case RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
 	case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:

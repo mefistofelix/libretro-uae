@@ -81,9 +81,9 @@ extern "C" {
 #ifdef UAE
 #define bug write_log
 #include "options.h"
-#include "autoconf.h"
 #include "events.h"
 #include "uae/memory.h"
+#include "autoconf.h"
 #include "custom.h"
 #else
 #include "cpu_emulation.h"

@@ -4824,6 +4824,17 @@ static void jit_trace_block(uae_u32 pc)
 		m68k_areg(regs, 0), m68k_areg(regs, 1), m68k_areg(regs, 2), m68k_areg(regs, 3),
 		m68k_areg(regs, 4), m68k_areg(regs, 5), m68k_areg(regs, 6), m68k_areg(regs, 7),
 		regflags.cznv, regflags.x);
+	/* memory at each address register, RAM banks only (reading I/O has side effects) */
+	char line[8 * 9 + 4] = "M", *q = line + 1;
+	for (int i = 0; i < 8; i++) {
+		uaecptr a = m68k_areg(regs, i) & ~1;
+		addrbank *ab = &get_mem_bank(a);
+		if ((ab->flags & ABFLAG_RAM) && ab->baseaddr)
+			q += sprintf(q, " %08x", ab->lget(a));
+		else
+			q += sprintf(q, " --------");
+	}
+	write_log(_T("%s\n"), line);
 }
 #endif
 

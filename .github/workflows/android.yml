@@ -90,7 +90,7 @@ jobs:
           path: dist
       - name: Rename per ABI
         run: |
-          for d in dist/*/; do
+          for d in dist/puae_libretro_android-*/; do
             abi=$(basename "$d" | sed 's/puae_libretro_android-//')
             mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
             [ -f "$d/jit-runner" ] && mv "$d/jit-runner" "dist/jit-runner-$abi"

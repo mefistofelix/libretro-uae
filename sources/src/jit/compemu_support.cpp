@@ -81,6 +81,7 @@ extern "C" {
 #ifdef UAE
 #define bug write_log
 #include "options.h"
+#include "autoconf.h"
 #include "events.h"
 #include "uae/memory.h"
 #include "custom.h"
@@ -4916,7 +4917,7 @@ static void compile_block(cpu_history* pc_hist, int blocklen)
 			if (log_blocks) {
 				uae_u32 pc68 = start_pc + (uae_u32)((uae_u8 *)pc_hist[0].location - (uae_u8 *)start_pc_p);
 				char buf[256], *q = buf;
-				q += sprintf(q, "JIT: block %08x len %d:", pc68, blocklen);
+				q += sprintf(q, "JIT: block %08x len %d sf %08x int %x:", pc68, blocklen, (unsigned)regs.spcflags, (unsigned)uae_int_requested);
 				for (int k = 0; k < blocklen && k < 24; k++) {
 					uae_u16 op = do_get_mem_word((uae_u16 *)pc_hist[k].location);
 					q += sprintf(q, " %04x%s", op, compfunctbl[cft_map(op)] ? "" : "*");

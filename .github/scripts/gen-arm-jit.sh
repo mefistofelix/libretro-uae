@@ -10,7 +10,7 @@ OUT=$(mktemp -d)
 ${HOSTCC:-cc} -O1 -w \
 	-I"$SRC" -I"$SRC/include" -I"$SRC/jit" -I"$ROOT" -I"$ROOT/retrodep" \
 	-I"$ROOT/libretro" -I"$ROOT/libretro-common/include" \
-	"$SRC/jit/gencomp_arm.c" "$SRC/cpudefs.c" "$SRC/readcpu.c" \
+	"$SRC/jit/gencomp_arm.c" "$SRC/cpudefs.c" "$SRC/readcpu.c" "$SRC/gen.c" \
 	-o "$OUT/gencomp_arm"
 
 (cd "$OUT" && ./gencomp_arm)

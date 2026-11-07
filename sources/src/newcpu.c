@@ -5565,7 +5565,7 @@ void execute_normal(void)
 {
 	struct regstruct *r = &regs;
 	int blocklen;
-	cpu_history pc_hist[MAXRUN];
+	struct cpu_history pc_hist[MAXRUN];
 	int total_cycles;
 
 	if (check_for_cache_miss ())

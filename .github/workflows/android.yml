@@ -21,6 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Generate ARM JIT tables
+        if: matrix.abi == 'armeabi-v7a'
+        run: sh .github/scripts/gen-arm-jit.sh
+
       - name: Build with ndk-build
         working-directory: jni
         run: |

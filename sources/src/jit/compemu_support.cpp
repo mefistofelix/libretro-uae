@@ -4830,7 +4830,7 @@ static void jit_trace_block(uae_u32 pc)
 		m68k_areg(regs, 4), m68k_areg(regs, 5), m68k_areg(regs, 6), m68k_areg(regs, 7),
 		regflags.cznv, regflags.x);
 	/* memory at each address register, RAM banks only (reading I/O has side effects) */
-	char line[8 * 9 + 4] = "M", *q = line + 1;
+	char line[8 * 9 + 64] = "M", *q = line + 1;
 	for (int i = 0; i < 8; i++) {
 		uaecptr a = m68k_areg(regs, i) & ~1;
 		addrbank *ab = &get_mem_bank(a);
@@ -4849,6 +4849,11 @@ static void jit_trace_block(uae_u32 pc)
 	if ((fb->flags & ABFLAG_RAM) && fb->baseaddr)
 		for (int i = 0; i < 0x10000; i++)
 			h = (h ^ fb->baseaddr[i]) * 16777619u;
+	{
+		addrbank *cb = &get_mem_bank(pc);
+		if ((cb->flags & ABFLAG_RAM) && cb->baseaddr)
+			q += sprintf(q, " C %08x%08x", cb->lget(pc), cb->lget(pc + 4));
+	}
 	write_log(_T("%s H %08x\n"), line, h);
 }
 #endif
@@ -4892,12 +4897,13 @@ static void compile_block(cpu_history* pc_hist, int blocklen)
 				log_blocks = getenv("PUAE_JIT_LOG") != NULL;
 			if (log_blocks) {
 				uae_u32 pc68 = start_pc + (uae_u32)((uae_u8 *)pc_hist[0].location - (uae_u8 *)start_pc_p);
-				write_log(_T("JIT: block %08x len %d:"), pc68, blocklen);
+				char buf[256], *q = buf;
+				q += sprintf(q, "JIT: block %08x len %d:", pc68, blocklen);
 				for (int k = 0; k < blocklen && k < 24; k++) {
 					uae_u16 op = do_get_mem_word((uae_u16 *)pc_hist[k].location);
-					write_log(_T(" %04x%s"), op, compfunctbl[cft_map(op)] ? "" : "*");
+					q += sprintf(q, " %04x%s", op, compfunctbl[cft_map(op)] ? "" : "*");
 				}
-				write_log(_T("\n"));
+				write_log(_T("%s\n"), buf);
 			}
 		}
 #endif

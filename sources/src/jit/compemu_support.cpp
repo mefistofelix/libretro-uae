@@ -3506,7 +3506,13 @@ void readlong(int address, int dest, int tmp)
 void get_n_addr(int address, int dest, int tmp)
 {
 #ifdef UAE
+#if defined(CPU_arm) && !defined(NATMEM_OFFSET)
+	/* Without natmem the baseaddr[] table is not reliable (banks mapped or re-allocated at
+	 * run time, e.g. Zorro II fast RAM): translate through the bank's xlateaddr, always. */
+	if (1) {
+#else
 	if (special_mem || distrust_addr()) {
+#endif
 		/* This one might appear a bit odd... */
 		readmem(address, dest, 6 * SIZEOF_VOID_P, 4, tmp);
 		return;
@@ -3552,6 +3558,11 @@ void get_n_addr(int address, int dest, int tmp)
 
 void get_n_addr_jmp(int address, int dest, int tmp)
 {
+#if defined(CPU_arm) && !defined(NATMEM_OFFSET)
+	/* host PC for a computed jump (JSR/JMP/RTS...): same translation as the interpreter */
+	get_n_addr(address, dest, tmp);
+	return;
+#endif
 #ifdef WINUAE_ARANYM
 	/* For this, we need to get the same address as the rest of UAE
 	 would --- otherwise we end up translating everything twice */

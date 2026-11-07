@@ -4806,6 +4806,28 @@ static void print_inst(void)
 
 
 #ifdef UAE
+/* Debugging aid for the JIT test runner: PUAE_JIT_TRACE=<lines> logs 68k PC, registers and
+ * flags at the start of every translated block run (after PUAE_JIT_TRACE_SKIP runs). */
+static int jit_trace_left = -1, jit_trace_skip;
+static void jit_trace_block(uae_u32 pc)
+{
+	if (jit_trace_skip > 0) {
+		jit_trace_skip--;
+		return;
+	}
+	if (jit_trace_left <= 0)
+		return;
+	jit_trace_left--;
+	write_log(_T("T %08x D %08x %08x %08x %08x %08x %08x %08x %08x A %08x %08x %08x %08x %08x %08x %08x %08x F %08x X %x\n"),
+		pc, m68k_dreg(regs, 0), m68k_dreg(regs, 1), m68k_dreg(regs, 2), m68k_dreg(regs, 3),
+		m68k_dreg(regs, 4), m68k_dreg(regs, 5), m68k_dreg(regs, 6), m68k_dreg(regs, 7),
+		m68k_areg(regs, 0), m68k_areg(regs, 1), m68k_areg(regs, 2), m68k_areg(regs, 3),
+		m68k_areg(regs, 4), m68k_areg(regs, 5), m68k_areg(regs, 6), m68k_areg(regs, 7),
+		regflags.cznv, regflags.x);
+}
+#endif
+
+#ifdef UAE
 void compile_block(cpu_history *pc_hist, int blocklen, int totcycles)
 {
 	if (cache_enabled && compiled_code && currprefs.cpu_model >= 68020) {
@@ -4951,6 +4973,19 @@ static void compile_block(cpu_history* pc_hist, int blocklen)
 		current_block_start_target=(uintptr)get_target();
 	
 		log_startblock();
+
+#ifdef UAE
+		if (jit_trace_left < 0) {
+			const char *tr = getenv("PUAE_JIT_TRACE"), *sk = getenv("PUAE_JIT_TRACE_SKIP");
+			jit_trace_left = tr ? atoi(tr) : 0;
+			jit_trace_skip = sk ? atoi(sk) : 0;
+		}
+		if (jit_trace_left > 0) {
+			uae_u32 pc68 = start_pc + (uae_u32)((uae_u8 *)pc_hist[0].location - (uae_u8 *)start_pc_p);
+			compemu_raw_mov_l_ri(REG_PAR1, pc68);
+			compemu_raw_call((uintptr)jit_trace_block);
+		}
+#endif
 
 		if (bi->count>=0) { /* Need to generate countdown code */
 			compemu_raw_mov_l_mi((uintptr)&regs.pc_p,(uintptr)pc_hist[0].location);

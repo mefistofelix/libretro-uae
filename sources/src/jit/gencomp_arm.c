@@ -5101,3 +5101,10 @@ int main(void)
 	fclose(headerfile);
 	return 0;
 }
+
+#ifdef UAE
+/* readcpu.c logs through write_log; the generator has nothing to log to (as in gencomp.c) */
+void write_log(const TCHAR *format, ...)
+{
+}
+#endif

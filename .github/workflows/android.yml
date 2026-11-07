@@ -44,7 +44,7 @@ jobs:
         working-directory: jni
         run: |
           "$ANDROID_NDK_LATEST_HOME/ndk-build" -k -j"$(nproc)" \
-            APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-21 NDK_CCACHE=ccache APP_CFLAGS=-w
+            APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-21 NDK_CCACHE=ccache APP_CFLAGS="-w -ferror-limit=0"
 
       - name: Package
         run: |

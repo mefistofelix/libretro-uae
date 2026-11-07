@@ -19,7 +19,7 @@ ${HOSTCC:-cc} -O1 -w \
 for f in compemu.c compstbl.c; do
 	{
 		printf '#include "sysconfig.h"\n#if defined(JIT)\n'
-		sed -e 's|"compiler/compemu.h"|"compemu.h"|' -e 's|"m68k.h"|"options.h"|' "$OUT/$f"
+		sed -e 's|"compiler/compemu.h"|"compemu.h"|' -e 's|"m68k.h"|"options.h"|' -e 's|return;|return 0;|g' "$OUT/$f"
 		printf '\n#endif /* JIT */\n'
 	} > "$SRC/jit/$f"
 done

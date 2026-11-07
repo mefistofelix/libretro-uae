@@ -558,6 +558,9 @@ void jit_abort(const char *format,...);
 #ifndef D
 #define D(x)
 #endif
+#ifndef D2
+#define D2(x)
+#endif
 #if SIZEOF_TCHAR != 1
 void jit_abort(const TCHAR *format, ...);
 #endif

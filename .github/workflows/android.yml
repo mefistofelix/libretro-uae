@@ -1,0 +1,61 @@
+name: Android core
+
+# Builds puae_libretro_android.so for the Fire TV (32-bit RetroArch: armeabi-v7a) and arm64.
+# Artifacts: one zip per ABI, named like the libretro buildbot files, so RetroArch's
+# Core Downloader can install them from a custom buildbot URL.
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [armeabi-v7a, arm64-v8a]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with ndk-build
+        working-directory: jni
+        run: |
+          "$ANDROID_NDK_LATEST_HOME/ndk-build" -j"$(nproc)" \
+            APP_ABI=${{ matrix.abi }} APP_PLATFORM=android-21
+
+      - name: Package
+        run: |
+          mkdir -p out
+          cp libs/${{ matrix.abi }}/libretro.so out/puae_libretro_android.so
+          cd out
+          zip -9 puae_libretro_android.so.zip puae_libretro_android.so
+          sha256sum puae_libretro_android.so* > SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puae_libretro_android-${{ matrix.abi }}
+          path: out/*
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Rename per ABI
+        run: |
+          for d in dist/*/; do
+            abi=$(basename "$d" | sed 's/puae_libretro_android-//')
+            mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
+          done
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip

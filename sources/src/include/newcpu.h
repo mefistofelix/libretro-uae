@@ -857,12 +857,12 @@ extern cpuop_func *cpufunctbl[65536] ASM_SYM_FOR_FUNC("cpufunctbl");
 
 #ifdef JIT
 extern void (*flush_icache)(int);
-extern void compemu_reset(void);
+JIT_C_LINKAGE void compemu_reset(void);
 #else
 #define flush_icache(int) do {} while (0)
 #define flush_icache_hard(int) do {} while (0)
 #endif
-bool check_prefs_changed_comp (bool);
+JIT_C_LINKAGE bool check_prefs_changed_comp (bool);
 
 extern int movec_illg (int regno);
 extern uae_u32 val_move2c (int regno);

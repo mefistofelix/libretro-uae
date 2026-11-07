@@ -89,6 +89,13 @@ using namespace std;
 
 #define UAE_RAND_MAX RAND_MAX
 
+/* JIT entry points are defined in C++ (jit/compemu_support.cpp) and called from C */
+#ifdef __cplusplus
+#define JIT_C_LINKAGE extern "C"
+#else
+#define JIT_C_LINKAGE extern
+#endif
+
 #if defined(JIT) && !defined(JIT_NO_NATMEM)
 #define NATMEM_OFFSET natmem_offset
 #elif defined(JIT)

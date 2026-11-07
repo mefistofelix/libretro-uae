@@ -158,7 +158,7 @@ union cacheline {
 
 /* Functions exposed to newcpu, or to what was moved from newcpu.c to
  * compemu_support.c */
-extern void compiler_init(void);
+JIT_C_LINKAGE void compiler_init(void);
 extern void compiler_exit(void);
 extern bool compiler_use_jit(void);
 extern void flush(int save_regs);
@@ -166,9 +166,9 @@ void flush_reg(int reg);
 extern void set_target(uae_u8* t);
 extern uae_u8* get_target(void);
 #ifdef UAE
-extern void build_comp(void);
+JIT_C_LINKAGE void build_comp(void);
 #endif
-extern void set_cache_state(int enabled);
+JIT_C_LINKAGE void set_cache_state(int enabled);
 extern int get_cache_state(void);
 extern uae_u32 get_jitted_size(void);
 #ifdef JIT

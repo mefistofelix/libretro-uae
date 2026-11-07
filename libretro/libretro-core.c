@@ -3979,6 +3979,30 @@ static void update_variables(void)
          strcat(uae_config, "cachesize=");
          strcat(uae_config, var.value);
          strcat(uae_config, "\n");
+
+         /* Optional JIT tuning/debugging: extra UAE config lines from <system>/puae_jit.uae,
+          * e.g. "jit_blacklist=MOVE,ADD", "comp_nf=false", "comp_constjump=false". */
+         {
+            char path[RETRO_PATH_MAX];
+            char line[512];
+            FILE *f;
+            snprintf(path, sizeof(path), "%s/puae_jit.uae", retro_system_directory);
+            if ((f = fopen(path, "r")))
+            {
+               while (fgets(line, sizeof(line), f))
+               {
+                  if (line[0] == '#' || line[0] == '\n' || line[0] == '\r')
+                     continue;
+                  if (strlen(uae_config) + strlen(line) + 2 >= sizeof(uae_config))
+                     break;
+                  strcat(uae_config, line);
+                  if (line[strlen(line) - 1] != '\n')
+                     strcat(uae_config, "\n");
+               }
+               fclose(f);
+               log_cb(RETRO_LOG_INFO, "JIT: extra settings read from \"%s\"\n", path);
+            }
+         }
       }
       else
          strcat(uae_config, "cachesize=0\n");

@@ -555,6 +555,9 @@ void jit_abort(const char *format,...);
 #ifndef panicbug
 #define panicbug(...) write_log(__VA_ARGS__)
 #endif
+#ifndef D
+#define D(x)
+#endif
 #if SIZEOF_TCHAR != 1
 void jit_abort(const TCHAR *format, ...);
 #endif

@@ -4967,6 +4967,9 @@ static void generate_one_opcode(int rp, int noflags) {
 		if (global_fpu)
 			flags |= 32;
 
+#ifdef UAE
+		comprintf("return 0;\n");
+#endif
 		comprintf("}\n");
 
 		name = lookuptab[i].name;
@@ -4982,7 +4985,11 @@ static void generate_one_opcode(int rp, int noflags) {
 					opcode, postfix, tbl);
 			printf ("/* %s */\n", outopcode (name, opcode));
 			printf(
+					#ifdef UAE /* PUAE's compop_func returns uae_u32, like jit/gencomp.c */
+					"uae_u32 REGPARAM2 op_%x_%d_comp_%s(uae_u32 opcode) /* %s */\n{\n",
+#else
 					"void REGPARAM2 op_%x_%d_comp_%s(uae_u32 opcode) /* %s */\n{\n",
+#endif
 					opcode, postfix, tbl, name);
 			com_flush();
 		}

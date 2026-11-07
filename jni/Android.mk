@@ -21,8 +21,9 @@ PUAE_JIT ?= 1
 JIT_SOURCES :=
 ifeq ($(TARGET_ARCH_ABI)$(PUAE_JIT),armeabi-v7a1)
 	# UAE must be known before sysdeps.h in the JIT sources; HAVE_MMAN enables mmap/mprotect.
+	# JIT_NO_NATMEM: indirect memory access (retrodep/mman.c natmem code is not up to date).
 	# No FPU JIT on ARM (the backend only has stubs): FPU opcodes stay in the interpreter.
-	COREFLAGS += -DJIT -DCPU_arm -DARMV6_ASSEMBLY -DARM_ASSEMBLY -DUAE= -DHAVE_MMAN
+	COREFLAGS += -DJIT -DCPU_arm -DARMV6_ASSEMBLY -DARM_ASSEMBLY -DUAE= -DHAVE_MMAN -DJIT_NO_NATMEM
 	JIT_SOURCES := \
 		$(EMU)/jit/compemu.c \
 		$(EMU)/jit/compstbl.c \

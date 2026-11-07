@@ -2067,20 +2067,14 @@ LOWFUNC(NONE,WRITE,2,raw_fmov_ext_mr,(MEMPTRW m, FR r))
 {
 	jit_unimplemented("raw_fmov_ext_mr %x %x", m, r);
 }
-LENDFUNC(NONE,WRITE,2,raw_fmov_ext_mr,(MEMPTRW m, FR r))
-
 LOWFUNC(NONE,WRITE,2,raw_fmov_ext_mr_drop,(MEMPTRW m, FR r))
 {
 	jit_unimplemented("raw_fmov_ext_mr_drop %x %x", m, r);
 }
-LENDFUNC(NONE,WRITE,2,raw_fmov_ext_mr_drop,(MEMPTRW m, FR r))
-
 LOWFUNC(NONE,READ,2,raw_fmov_ext_rm,(FW r, MEMPTRR m))
 {
 	jit_unimplemented("raw_fmov_ext_rm %x %x", r, m);
 }
-LENDFUNC(NONE,READ,2,raw_fmov_ext_rm,(FW r, MEMPTRR m))
-
 LOWFUNC(NONE,READ,2,raw_fmov_rm,(FW r, MEMPTRR m))
 {
 	jit_unimplemented("raw_fmov_rm %x %x", r, m);

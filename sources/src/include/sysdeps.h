@@ -89,8 +89,11 @@ using namespace std;
 
 #define UAE_RAND_MAX RAND_MAX
 
-#ifdef JIT
+#if defined(JIT) && !defined(JIT_NO_NATMEM)
 #define NATMEM_OFFSET natmem_offset
+#elif defined(JIT)
+/* JIT with indirect memory access (no natmem): Amiga memory goes through the bank handlers. */
+#undef NATMEM_OFFSET
 #else
 #undef NATMEM_OFFSET
 #  undef JIT_DEBUG

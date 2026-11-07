@@ -10,6 +10,7 @@
  *   resets, exceptions (illegal/A-line/F-line traps logged by the core), frame and chip RAM hashes.
  * Writes the last frame to last.ppm.
  */
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +19,9 @@
 #include <stdbool.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
+#include <signal.h>
+#include <ucontext.h>
+#include <unistd.h>
 #include "libretro.h"
 
 #define MAX_OPTS 512
@@ -200,11 +204,51 @@ static void write_ppm(const char *path)
 	fclose(f);
 }
 
+static uintptr_t core_base;
+
+static void crash_handler(int sig, siginfo_t *si, void *uc_)
+{
+	char buf[1024];
+	int n = 0;
+#if defined(__arm__)
+	ucontext_t *uc = uc_;
+	struct sigcontext *m = &uc->uc_mcontext;
+	n = snprintf(buf, sizeof(buf),
+		"CRASH signal %d code %d addr %p\n  pc %08lx (core+%lx) lr %08lx (core+%lx) sp %08lx cpsr %08lx\n"
+		"  r0 %08lx r1 %08lx r2 %08lx r3 %08lx r4 %08lx r5 %08lx r6 %08lx r7 %08lx\n"
+		"  r8 %08lx r9 %08lx r10 %08lx fp %08lx ip %08lx\n",
+		sig, si->si_code, si->si_addr, m->arm_pc, m->arm_pc - core_base, m->arm_lr, m->arm_lr - core_base,
+		m->arm_sp, m->arm_cpsr, m->arm_r0, m->arm_r1, m->arm_r2, m->arm_r3, m->arm_r4, m->arm_r5,
+		m->arm_r6, m->arm_r7, m->arm_r8, m->arm_r9, m->arm_r10, m->arm_fp, m->arm_ip);
+	{
+		unsigned long pc = m->arm_pc & ~1UL;
+		n += snprintf(buf + n, sizeof(buf) - n, "  code at pc-16:");
+		for (int i = -4; i < 4; i++)
+			n += snprintf(buf + n, sizeof(buf) - n, " %08lx", (unsigned long)((uint32_t *)pc)[i]);
+		n += snprintf(buf + n, sizeof(buf) - n, "
+");
+	}
+	/* return addresses on the stack that point into the core: a rough backtrace */
+	unsigned long *sp = (unsigned long *)m->arm_sp;
+	for (int i = 0, k = 0; i < 512 && k < 24 && n < (int)sizeof(buf) - 40; i++)
+		if (sp[i] > core_base && sp[i] - core_base < 0x800000) {
+			n += snprintf(buf + n, sizeof(buf) - n, "  stack[%d] core+%lx\n", i, sp[i] - core_base);
+			k++;
+		}
+#else
+	(void)uc_;
+	n = snprintf(buf, sizeof(buf), "CRASH signal %d addr %p\n", sig, si->si_addr);
+#endif
+	write(1, buf, n);
+	_exit(128 + sig);
+}
+
 #define SYM(name) do { *(void **)&p_##name = dlsym(core, #name); \
 	if (!p_##name) { fprintf(stderr, "missing %s\n", #name); return 2; } } while (0)
 
 int main(int argc, char **argv)
 {
+	setvbuf(stdout, NULL, _IOLBF, 0);
 	snprintf(sys_dir, sizeof(sys_dir), "system");
 	snprintf(save_dir, sizeof(save_dir), "saves");
 	if (argc < 4) {
@@ -253,6 +297,20 @@ int main(int argc, char **argv)
 	SYM(retro_set_audio_sample_batch); SYM(retro_set_input_poll); SYM(retro_set_input_state);
 	SYM(retro_init); SYM(retro_load_game); SYM(retro_run);
 	SYM(retro_get_memory_data); SYM(retro_get_memory_size);
+	{
+		Dl_info di;
+		if (dladdr((void *)p_retro_run, &di))
+			core_base = (uintptr_t)di.dli_fbase;
+		printf("core loaded at %p\n", (void *)core_base);
+		struct sigaction sa;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_sigaction = crash_handler;
+		sa.sa_flags = SA_SIGINFO;
+		sigaction(SIGSEGV, &sa, NULL);
+		sigaction(SIGBUS, &sa, NULL);
+		sigaction(SIGILL, &sa, NULL);
+		sigaction(SIGFPE, &sa, NULL);
+	}
 
 	p_retro_set_environment(environment);
 	p_retro_set_video_refresh(video_cb);

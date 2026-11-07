@@ -20,10 +20,11 @@ COREFLAGS := -DANDROID -D__LIBRETRO__ -DUSE_LIBRETRO_VFS $(CFLAGS) $(INCFLAGS) -
 PUAE_JIT ?= 1
 JIT_SOURCES :=
 ifeq ($(TARGET_ARCH_ABI)$(PUAE_JIT),armeabi-v7a1)
-	COREFLAGS += -DJIT -DCPU_arm -DARMV6_ASSEMBLY -DARM_ASSEMBLY
+	# UAE must be known before sysdeps.h in the JIT sources; HAVE_MMAN enables mmap/mprotect.
+	# No FPU JIT on ARM (the backend only has stubs): FPU opcodes stay in the interpreter.
+	COREFLAGS += -DJIT -DCPU_arm -DARMV6_ASSEMBLY -DARM_ASSEMBLY -DUAE= -DHAVE_MMAN
 	JIT_SOURCES := \
 		$(EMU)/jit/compemu.c \
-		$(EMU)/jit/compemu_fpp.c \
 		$(EMU)/jit/compstbl.c \
 		$(EMU)/jit/compemu_support.cpp
 endif

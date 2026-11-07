@@ -105,6 +105,24 @@ bool jit_direct_compatible_memory;
 
 #if defined(HAVE_MMAN)
 #include <sys/mman.h>
+#include <errno.h>
+#ifndef _WIN32
+/* POSIX stand-in for the Win32 call used by the natmem/JIT code paths. */
+static bool VirtualProtect(void *addr, size_t size, int prot, DWORD *old)
+{
+	uintptr_t ps = (uintptr_t)sysconf(_SC_PAGESIZE);
+	uintptr_t start = (uintptr_t)addr & ~(ps - 1);
+	int p = prot == PAGE_READONLY ? PROT_READ
+	      : prot == PAGE_EXECUTE_READWRITE ? (PROT_READ | PROT_WRITE | PROT_EXEC)
+	      : (PROT_READ | PROT_WRITE);
+	if (old)
+		*old = PAGE_READWRITE;
+	return mprotect((void *)start, size + ((uintptr_t)addr - start), p) == 0;
+}
+#ifndef GetLastError
+#define GetLastError() errno
+#endif
+#endif
 #endif
 
 struct virt_alloc_s;

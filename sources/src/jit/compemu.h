@@ -551,6 +551,10 @@ LONG WINAPI EvalException(LPEXCEPTION_POINTERS info);
 #endif
 
 void jit_abort(const char *format,...);
+/* ARAnyM's logger, used by the ARM backend */
+#ifndef panicbug
+#define panicbug(...) write_log(__VA_ARGS__)
+#endif
 #if SIZEOF_TCHAR != 1
 void jit_abort(const TCHAR *format, ...);
 #endif

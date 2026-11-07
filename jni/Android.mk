@@ -27,6 +27,7 @@ ifeq ($(TARGET_ARCH_ABI)$(PUAE_JIT),armeabi-v7a1)
 	JIT_SOURCES := \
 		$(EMU)/jit/compemu.c \
 		$(EMU)/jit/compstbl.c \
+		$(EMU)/vm.c \
 		$(EMU)/jit/compemu_support.cpp
 endif
 

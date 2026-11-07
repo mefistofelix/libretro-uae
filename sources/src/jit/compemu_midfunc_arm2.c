@@ -185,8 +185,9 @@ MIDFUNC(3,jff_ADD_b_imm,(W4 d, RR1 s, IMM v))
 	d=writereg(d,4);
 
 	SIGNED8_IMM_2_REG(REG_WORK2, (uint8)v);
-	SIGNED8_REG_2_REG(REG_WORK1, s);
-	ADDS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 24);
+	ADDS_rrrLSLi(d, REG_WORK1, REG_WORK2, 24);
+	ASR_rri(d, d, 24);
 
 	unlock2(d);
 	unlock2(s);
@@ -203,9 +204,9 @@ MIDFUNC(3,jff_ADD_b,(W4 d, RR1 s, RR1 v))
 	s=readreg(s,4);
 	d=writereg(d,4);
 
-	SIGNED8_REG_2_REG(REG_WORK1, s);
-	SIGNED8_REG_2_REG(REG_WORK2, v);
-	ADDS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 24);
+	ADDS_rrrLSLi(d, REG_WORK1, v, 24);
+	ASR_rri(d, d, 24);
 
 	unlock2(d);
 	unlock2(s);
@@ -218,8 +219,9 @@ MIDFUNC(3,jff_ADD_w_imm,(W4 d, RR2 s, IMM v))
 	d=writereg(d,4);
 
 	SIGNED16_IMM_2_REG(REG_WORK2, (uint16)v);
-	SIGNED16_REG_2_REG(REG_WORK1, s);
-	ADDS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 16);
+	ADDS_rrrLSLi(d, REG_WORK1, REG_WORK2, 16);
+	ASR_rri(d, d, 16);
 
 	unlock2(d);
 	unlock2(s);
@@ -235,9 +237,9 @@ MIDFUNC(3,jff_ADD_w,(W4 d, RR2 s, RR2 v))
 	s=readreg(s,4);
 	d=writereg(d,4);
 
-	SIGNED16_REG_2_REG(REG_WORK1, s);
-	SIGNED16_REG_2_REG(REG_WORK2, v);
-	ADDS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 16);
+	ADDS_rrrLSLi(d, REG_WORK1, v, 16);
+	ASR_rri(d, d, 16);
 
 	unlock2(d);
 	unlock2(s);
@@ -1594,9 +1596,8 @@ MIDFUNC(2,jff_CMP_b,(RR1 d, RR1 s))
 	d=readreg(d,4);
 	s=readreg(s,4);
 
-	SIGNED8_REG_2_REG(REG_WORK1, d);
-	SIGNED8_REG_2_REG(REG_WORK2, s);
-	CMP_rr(REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, d, 24);
+	CMP_rrLSLi(REG_WORK1, s, 24);
 
 	MRS_CPSR(REG_WORK1);
 	EOR_rri(REG_WORK1, REG_WORK1, ARM_C_FLAG);
@@ -1612,9 +1613,8 @@ MIDFUNC(2,jff_CMP_w,(RR2 d, RR2 s))
 	d=readreg(d,4);
 	s=readreg(s,4);
 
-	SIGNED16_REG_2_REG(REG_WORK1, d);
-	SIGNED16_REG_2_REG(REG_WORK2, s);
-	CMP_rr(REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, d, 16);
+	CMP_rrLSLi(REG_WORK1, s, 16);
 
 	MRS_CPSR(REG_WORK1);
 	EOR_rri(REG_WORK1, REG_WORK1, ARM_C_FLAG);
@@ -2913,8 +2913,9 @@ MIDFUNC(2,jff_NEG_b,(W4 d, RR1 s))
 	d=writereg(d,4);
 	s=readreg(s,4);
 
-	SIGNED8_REG_2_REG(REG_WORK1, s);
-	RSBS_rri(d,REG_WORK1,0);
+	LSL_rri(REG_WORK1, s, 24);
+	RSBS_rri(d, REG_WORK1, 0);
+	ASR_rri(d, d, 24);
 
 	// inverted_carry = true;
 	MRS_CPSR(REG_WORK1);
@@ -2930,8 +2931,9 @@ MIDFUNC(2,jff_NEG_w,(W4 d, RR2 s))
 	d=writereg(d,4);
 	s=readreg(s,4);
 
-	SIGNED16_REG_2_REG(REG_WORK1, s);
-	RSBS_rri(d,REG_WORK1,0);
+	LSL_rri(REG_WORK1, s, 16);
+	RSBS_rri(d, REG_WORK1, 0);
+	ASR_rri(d, d, 16);
 
 	// inverted_carry = true;
 	MRS_CPSR(REG_WORK1);
@@ -4833,8 +4835,9 @@ MIDFUNC(3,jff_SUB_b_imm,(W4 d, RR1 s, IMM v))
 	d=writereg(d,4);
 
 	SIGNED8_IMM_2_REG(REG_WORK2, (uint8)v);
-	SIGNED8_REG_2_REG(REG_WORK1, s);
-	SUBS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 24);
+	SUBS_rrrLSLi(d, REG_WORK1, REG_WORK2, 24);
+	ASR_rri(d, d, 24);
 
 	// Todo: Handle this with inverted carry
 	MRS_CPSR(REG_WORK1);// mrs     r2, CPSR
@@ -4857,9 +4860,9 @@ MIDFUNC(3,jff_SUB_b,(W4 d, RR1 s, RR1 v))
 	s=readreg(s,4);
 	d=writereg(d,4);
 
-	SIGNED8_REG_2_REG(REG_WORK1, s);
-	SIGNED8_REG_2_REG(REG_WORK2, v);
-	SUBS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 24);
+	SUBS_rrrLSLi(d, REG_WORK1, v, 24);
+	ASR_rri(d, d, 24);
 
 	// Todo: Handle this with inverted carry
 	MRS_CPSR(REG_WORK1);// mrs     r2, CPSR
@@ -4878,8 +4881,9 @@ MIDFUNC(3,jff_SUB_w_imm,(W4 d, RR2 s, IMM v))
 	d=writereg(d,4);
 
 	SIGNED16_IMM_2_REG(REG_WORK2, (uint16)v);
-	SIGNED16_REG_2_REG(REG_WORK1, s);
-	SUBS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 16);
+	SUBS_rrrLSLi(d, REG_WORK1, REG_WORK2, 16);
+	ASR_rri(d, d, 16);
 
 	// Todo: Handle this with inverted carry
 	MRS_CPSR(REG_WORK1);// mrs     r2, CPSR
@@ -4902,9 +4906,9 @@ MIDFUNC(3,jff_SUB_w,(W4 d, RR2 s, RR2 v))
 	s=readreg(s,4);
 	d=writereg(d,4);
 
-	SIGNED16_REG_2_REG(REG_WORK1, s);
-	SIGNED16_REG_2_REG(REG_WORK2, v);
-	SUBS_rrr(d,REG_WORK1,REG_WORK2);
+	LSL_rri(REG_WORK1, s, 16);
+	SUBS_rrrLSLi(d, REG_WORK1, v, 16);
+	ASR_rri(d, d, 16);
 
 	// Todo: Handle this with inverted carry
 	MRS_CPSR(REG_WORK1);// mrs     r2, CPSR

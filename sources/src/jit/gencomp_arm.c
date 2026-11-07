@@ -4032,6 +4032,13 @@ gen_opcode(unsigned long int opcode) {
 		break;
 
 	case i_SUBX:
+#ifdef UAE
+		/* byte/word forms: flags not right in the ARM backend yet */
+		if (curi->size != sz_long) {
+			failure;
+			break;
+		}
+#endif
 		gen_subx(opcode, curi, ssize);
 		break;
 
@@ -4048,6 +4055,13 @@ gen_opcode(unsigned long int opcode) {
 		break;
 
 	case i_ADDX:
+#ifdef UAE
+		/* byte/word forms: flags not right in the ARM backend yet */
+		if (curi->size != sz_long) {
+			failure;
+			break;
+		}
+#endif
 		gen_addx(opcode, curi, ssize);
 		break;
 
@@ -4436,10 +4450,24 @@ gen_opcode(unsigned long int opcode) {
 		break;
 
 	case i_ROXL:
+#ifdef UAE
+		/* byte/word forms: flags not right in the ARM backend yet */
+		if (curi->size != sz_long) {
+			failure;
+			break;
+		}
+#endif
 		gen_roxl(opcode, curi, ssize);
 		break;
 
 	case i_ROXR:
+#ifdef UAE
+		/* byte/word forms: flags not right in the ARM backend yet */
+		if (curi->size != sz_long) {
+			failure;
+			break;
+		}
+#endif
 		gen_roxr(opcode, curi, ssize);
 		break;
 

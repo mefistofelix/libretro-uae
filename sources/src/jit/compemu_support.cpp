@@ -4479,6 +4479,45 @@ void build_comp(void)
 		jit_log("<JIT compiler> : blacklist merge failure!");
 	}
 
+	/* Debugging aid for the JIT test runner: PUAE_JIT_EXCLUDE / PUAE_JIT_ONLY = comma-separated
+	 * hex opcode ranges ("2000-2fff,4e75") to leave to the interpreter / to keep in the JIT. */
+	{
+		const char *ex = getenv("PUAE_JIT_EXCLUDE"), *only = getenv("PUAE_JIT_ONLY");
+		for (int pass = 0; pass < 2; pass++) {
+			const char *s = pass ? only : ex;
+			if (!s || !*s)
+				continue;
+			static bool keep[65536];
+			if (pass)
+				memset(keep, 0, sizeof(keep));
+			while (*s) {
+				unsigned lo = 0, hi = 0;
+				int n = 0;
+				if (sscanf(s, "%x-%x%n", &lo, &hi, &n) < 2) {
+					n = 0;
+					sscanf(s, "%x%n", &lo, &n);
+					hi = lo;
+				}
+				if (n <= 0)
+					break;
+				for (unsigned op = lo; op <= hi && op < 65536; op++) {
+					if (pass)
+						keep[op] = true;
+					else
+						reset_compop(cft_map(op));
+				}
+				s += n;
+				if (*s == ',')
+					s++;
+			}
+			if (pass)
+				for (unsigned op = 0; op < 65536; op++)
+					if (!keep[op])
+						reset_compop(cft_map(op));
+			jit_log("<JIT compiler> : %s from the environment", pass ? "PUAE_JIT_ONLY" : "PUAE_JIT_EXCLUDE");
+		}
+	}
+
 	count=0;
 	for (opcode = 0; opcode < 65536; opcode++) {
 		if (compfunctbl[cft_map(opcode)])
@@ -4798,6 +4837,22 @@ static void compile_block(cpu_history* pc_hist, int blocklen)
 #endif
 		uae_u32 cl=cacheline(pc_hist[0].location);
 		void* specflags=(void*)&regs.spcflags;
+#ifdef UAE
+		{
+			static int log_blocks = -1;
+			if (log_blocks < 0)
+				log_blocks = getenv("PUAE_JIT_LOG") != NULL;
+			if (log_blocks) {
+				uae_u32 pc68 = start_pc + (uae_u32)((uae_u8 *)pc_hist[0].location - (uae_u8 *)start_pc_p);
+				write_log(_T("JIT: block %08x len %d:"), pc68, blocklen);
+				for (int k = 0; k < blocklen && k < 24; k++) {
+					uae_u16 op = do_get_mem_word((uae_u16 *)pc_hist[k].location);
+					write_log(_T(" %04x%s"), op, compfunctbl[cft_map(op)] ? "" : "*");
+				}
+				write_log(_T("\n"));
+			}
+		}
+#endif
 		blockinfo* bi=NULL;
 		blockinfo* bi2;
 		int extra_len=0;

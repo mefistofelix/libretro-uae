@@ -51,6 +51,8 @@ jobs:
         run: |
           mkdir -p out
           "$ANDROID_NDK_LATEST_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi21-clang"             -O2 -w -Ilibretro-common/include .github/scripts/jit-runner.c -ldl -o out/jit-runner
+          # NDK profiler, to profile the core on the Fire TV with the runner
+          cp "$ANDROID_NDK_LATEST_HOME/simpleperf/bin/android/arm/simpleperf" out/simpleperf
 
       - name: Package
         run: |
@@ -96,17 +98,18 @@ jobs:
             abi=$(basename "$d" | sed 's/puae_libretro_android-//')
             mv "$d/puae_libretro_android.so.zip" "dist/puae_libretro_android-$abi.so.zip"
             [ -f "$d/jit-runner" ] && mv "$d/jit-runner" "dist/jit-runner-$abi"
+            [ -f "$d/simpleperf" ] && mv "$d/simpleperf" "dist/simpleperf-$abi"
             mv "$d/puae_libretro_android.debug.so.zip" "dist/puae_libretro_android-$abi.debug.so.zip"
           done
           ls -la dist
       - name: Publish release
         run: |
           if [ "${GITHUB_REF_TYPE}" = tag ]; then
-            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/jit-runner-* --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/jit-runner-* dist/simpleperf-* --title "$GITHUB_REF_NAME" --generate-notes
           else
             tag="build-$(echo "$GITHUB_REF_NAME" | tr '/' '-')"
             gh release delete "$tag" --yes --cleanup-tag || true
-            gh release create "$tag" dist/*.zip dist/jit-runner-* --prerelease --target "$GITHUB_SHA" \
+            gh release create "$tag" dist/*.zip dist/jit-runner-* dist/simpleperf-* --prerelease --target "$GITHUB_SHA" \
               --title "$GITHUB_REF_NAME build $(echo "$GITHUB_SHA" | cut -c1-7)" \
               --notes "Automatic build of $GITHUB_REF_NAME at $GITHUB_SHA."
           fi

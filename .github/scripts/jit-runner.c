@@ -3,6 +3,7 @@
  *
  * usage: jit-runner <core.so> <frames> <content|-> [key=value ...]
  *   key=value: core options (puae_*) passed to the core; also sysdir=, savedir=, quiet=1.
+ *   optlist=1: print every option the core declares ("OPT key = description; values").
  *   input=FRAME:BUTTON[:LEN],...  press a RetroPad button of port 0 at FRAME for LEN frames
  *     (default 6); BUTTON is b y select start up down left right a x l r l2 r2 l3 r3 or a number.
  *   shots=FRAME,...  also write the frame to shot_FRAME.ppm at those frames.
@@ -28,6 +29,7 @@
 static const char *opt_key[MAX_OPTS], *opt_val[MAX_OPTS];
 static int n_opts;
 static char sys_dir[1024], save_dir[1024];
+static int opt_list;
 static unsigned resets, traps;
 static enum retro_pixel_format pixfmt = RETRO_PIXEL_FORMAT_0RGB1555;
 static uint8_t *frame;
@@ -120,6 +122,9 @@ static bool environment(unsigned cmd, void *data)
 		 * the first value of "Description; default|other|..." */
 		for (const struct retro_variable *v = data; v && v->key; v++) {
 			int known = 0;
+			if (opt_list)
+				printf("OPT %s = %s
+", v->key, v->value ? v->value : "");
 			for (int i = 0; i < n_opts; i++)
 				known |= !strcmp(v->key, opt_key[i]);
 			const char *semi = v->value ? strstr(v->value, "; ") : NULL;
@@ -262,6 +267,7 @@ int main(int argc, char **argv)
 			continue;
 		*eq = 0;
 		if (!strcmp(argv[i], "quiet")) { quiet_log = atoi(eq + 1); continue; }
+		if (!strcmp(argv[i], "optlist")) { opt_list = atoi(eq + 1); continue; }
 		if (!strcmp(argv[i], "sysdir")) { snprintf(sys_dir, sizeof(sys_dir), "%s", eq + 1); continue; }
 		if (!strcmp(argv[i], "savedir")) { snprintf(save_dir, sizeof(save_dir), "%s", eq + 1); continue; }
 		if (!strcmp(argv[i], "input")) { parse_input(eq + 1); continue; }

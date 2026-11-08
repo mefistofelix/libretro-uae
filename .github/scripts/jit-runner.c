@@ -123,8 +123,7 @@ static bool environment(unsigned cmd, void *data)
 		for (const struct retro_variable *v = data; v && v->key; v++) {
 			int known = 0;
 			if (opt_list)
-				printf("OPT %s = %s
-", v->key, v->value ? v->value : "");
+				printf("OPT %s = %s\n", v->key, v->value ? v->value : "");
 			for (int i = 0; i < n_opts; i++)
 				known |= !strcmp(v->key, opt_key[i]);
 			const char *semi = v->value ? strstr(v->value, "; ") : NULL;
